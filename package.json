@@ -1,0 +1,36 @@
+{
+  "name": "mason",
+  "module": "src/index.ts",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "start": "bun src/index.ts",
+    "dev": "bun --watch src/index.ts",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "lint": "biome check .",
+    "lint:fix": "biome check --write .",
+    "typecheck": "tsc --noEmit",
+    "test": "bun test",
+    "ci": "bun run lint && bun run typecheck && bun test"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.4.2",
+    "@types/bun": "latest",
+    "@types/luxon": "^3.7.1",
+    "drizzle-kit": "^0.31.9"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  },
+  "dependencies": {
+    "@slack/bolt": "^4.6.0",
+    "arktype": "^2.1.29",
+    "drizzle-orm": "^0.45.1",
+    "jsx-slack": "^6.1.2",
+    "luxon": "^3.7.2",
+    "openai": "^6.22.0",
+    "postgres": "^3.4.8",
+    "yaml": "^2.8.2"
+  }
+}
