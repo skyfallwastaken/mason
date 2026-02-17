@@ -21,12 +21,24 @@ type RegisterSlackListenersOptions = {
   macros: MacroRegistry;
 };
 
-export function registerSlackListeners(options: RegisterSlackListenersOptions): void {
-  const { app, config, repo, membershipService, summarizer, resolveService, macros } = options;
+export function registerSlackListeners(
+  options: RegisterSlackListenersOptions,
+): void {
+  const {
+    app,
+    config,
+    repo,
+    membershipService,
+    summarizer,
+    resolveService,
+    macros,
+  } = options;
 
   app.event("message", async ({ event, client, logger }) => {
     try {
-      const message = toUserMessageEvent(event as unknown as Record<string, unknown>);
+      const message = toUserMessageEvent(
+        event as unknown as Record<string, unknown>,
+      );
       if (!message || message.channel !== config.helpChannelId) {
         return;
       }
@@ -56,7 +68,8 @@ export function registerSlackListeners(options: RegisterSlackListenersOptions): 
         message,
         client: slackClient,
         config,
-        isBtsMember: async (userId: string) => membershipService.isInBts(userId),
+        isBtsMember: async (userId: string) =>
+          membershipService.isInBts(userId),
         resolveThread: async (macroClient, threadTs, resolverUserId) => {
           return resolveService.resolve(macroClient, threadTs, resolverUserId);
         },
@@ -82,13 +95,19 @@ export function registerSlackListeners(options: RegisterSlackListenersOptions): 
     const resolverUserId = castBody.user?.id;
     const channelId = castBody.channel?.id;
     const threadTs =
-      castBody.actions?.[0]?.value ?? castBody.message?.thread_ts ?? castBody.message?.ts;
+      castBody.actions?.[0]?.value ??
+      castBody.message?.thread_ts ??
+      castBody.message?.ts;
 
     if (!resolverUserId || !threadTs || !channelId) {
       return;
     }
 
-    const result = await resolveService.resolve(slackClient, threadTs, resolverUserId);
+    const result = await resolveService.resolve(
+      slackClient,
+      threadTs,
+      resolverUserId,
+    );
     if (result.outcome !== "resolved") {
       await slackClient.chat.postMessage({
         channel: channelId,
@@ -116,7 +135,9 @@ type NewHelpMessageOptions = {
   };
 };
 
-async function handleNewHelpMessage(options: NewHelpMessageOptions): Promise<void> {
+async function handleNewHelpMessage(
+  options: NewHelpMessageOptions,
+): Promise<void> {
   const { message, client, config, repo, summarizer, logger } = options;
 
   await tryAddThinkingReaction(client, message.channel, message.ts);
@@ -152,7 +173,6 @@ async function handleNewHelpMessage(options: NewHelpMessageOptions): Promise<voi
       openerUserId: message.user,
       title,
       permalink,
-      bodyPreview: message.text,
     }),
   });
 
@@ -160,7 +180,10 @@ async function handleNewHelpMessage(options: NewHelpMessageOptions): Promise<voi
     try {
       await repo.updateForwardedMessage(message.ts, forwarded.ts);
     } catch (error) {
-      logger.warn("Forwarded message sent, but failed to store forwarded_message_ts", error);
+      logger.warn(
+        "Forwarded message sent, but failed to store forwarded_message_ts",
+        error,
+      );
     }
   }
 }
@@ -181,7 +204,11 @@ async function tryAddThinkingReaction(
   }
 }
 
-async function getPermalink(client: SlackClient, channel: string, ts: string): Promise<string> {
+async function getPermalink(
+  client: SlackClient,
+  channel: string,
+  ts: string,
+): Promise<string> {
   try {
     const response = await client.chat.getPermalink({
       channel,

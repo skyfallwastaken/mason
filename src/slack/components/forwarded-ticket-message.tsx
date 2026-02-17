@@ -6,28 +6,22 @@ type ForwardedTicketProps = {
   openerUserId: string;
   title: string;
   permalink: string;
-  bodyPreview: string;
 };
 
-function truncate(text: string, max = 180): string {
-  const normalized = text.trim().replace(/\s+/g, " ");
-  if (normalized.length <= max) {
-    return normalized;
-  }
+export function buildForwardedTicketBlocks(
+  props: ForwardedTicketProps,
+): KnownBlock[] {
+  const openerLine = `:ticket: New help ticket from <@${props.openerUserId}>`;
 
-  return `${normalized.slice(0, max - 3)}...`;
-}
-
-export function buildForwardedTicketBlocks(props: ForwardedTicketProps): KnownBlock[] {
   return JSXSlack(
     <Blocks>
+      <Section>{openerLine}</Section>
       <Section>
-        :ticket: New help ticket from &lt;@{props.openerUserId}&gt;{"\n"}
         <b>{props.title}</b>
-        {"\n"}
+      </Section>
+      <Section>
         <a href={props.permalink}>Open thread</a>
       </Section>
-      <Context>{truncate(props.bodyPreview)}</Context>
       <Divider />
     </Blocks>,
   ) as KnownBlock[];
