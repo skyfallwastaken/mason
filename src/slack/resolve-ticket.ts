@@ -65,7 +65,7 @@ export class ResolveTicketService {
     await client.chat.postMessage({
       channel: ticket.helpChannelId,
       thread_ts: threadTs,
-      text: `:white_check_mark: Resolved by <@${resolverUserId}>.`,
+      text: `Aha, this post has just been marked as resolved by <@${resolverUserId}>! I'll head back now, but if you need any more help, just send another message in #hackatime-help and I'll be right back o/`,
     });
 
     if (ticket.forwardedMessageTs) {
