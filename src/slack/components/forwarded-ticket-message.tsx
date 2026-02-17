@@ -1,6 +1,6 @@
 /** @jsxImportSource jsx-slack */
 import type { KnownBlock } from "@slack/types";
-import JSXSlack, { Blocks, Context, Divider, Section } from "jsx-slack";
+import JSXSlack, { Blocks, Divider, Section } from "jsx-slack";
 
 type ForwardedTicketProps = {
   openerUserId: string;
@@ -8,9 +8,7 @@ type ForwardedTicketProps = {
   permalink: string;
 };
 
-export function buildForwardedTicketBlocks(
-  props: ForwardedTicketProps,
-): KnownBlock[] {
+export function buildForwardedTicketBlocks(props: ForwardedTicketProps): KnownBlock[] {
   const openerLine = `:ticket: New help ticket from <@${props.openerUserId}>`;
 
   return JSXSlack(
