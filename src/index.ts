@@ -60,6 +60,10 @@ registerSlackListeners({
   macros,
 });
 
+app.error(async (error) => {
+  app.logger.error("Bolt global error", error);
+});
+
 const stopSummaryScheduler = scheduleDailyAtMidnight(
   config.summaryTimezone,
   async () => {

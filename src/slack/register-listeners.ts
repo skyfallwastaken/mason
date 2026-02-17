@@ -25,42 +25,47 @@ export function registerSlackListeners(options: RegisterSlackListenersOptions): 
   const { app, config, repo, membershipService, summarizer, resolveService, macros } = options;
 
   app.event("message", async ({ event, client, logger }) => {
-    const message = toUserMessageEvent(event as unknown as Record<string, unknown>);
-    if (!message || message.channel !== config.helpChannelId) {
-      return;
-    }
+    try {
+      const message = toUserMessageEvent(event as unknown as Record<string, unknown>);
+      if (!message || message.channel !== config.helpChannelId) {
+        return;
+      }
 
-    const slackClient = client as unknown as SlackClient;
+      const slackClient = client as unknown as SlackClient;
 
-    if (!message.thread_ts) {
-      await handleNewHelpMessage({
+      if (!message.thread_ts) {
+        await handleNewHelpMessage({
+          message,
+          client: slackClient,
+          config,
+          repo,
+          summarizer,
+          logger,
+        });
+        return;
+      }
+
+      await repo.markThreadReply(message.thread_ts);
+
+      const isBts = await membershipService.isInBts(message.user);
+      if (isBts) {
+        await repo.assignIfUnassigned(message.thread_ts, message.user);
+      }
+
+      await macros.run(message.text, {
         message,
         client: slackClient,
         config,
-        repo,
-        summarizer,
+        isBtsMember: async (userId: string) => membershipService.isInBts(userId),
+        resolveThread: async (macroClient, threadTs, resolverUserId) => {
+          return resolveService.resolve(macroClient, threadTs, resolverUserId);
+        },
       });
-      return;
+
+      logger.debug(`Processed thread message ${message.ts}`);
+    } catch (error) {
+      logger.error("Failed to process message event", error);
     }
-
-    await repo.markThreadReply(message.thread_ts);
-
-    const isBts = await membershipService.isInBts(message.user);
-    if (isBts) {
-      await repo.assignIfUnassigned(message.thread_ts, message.user);
-    }
-
-    await macros.run(message.text, {
-      message,
-      client: slackClient,
-      config,
-      isBtsMember: async (userId: string) => membershipService.isInBts(userId),
-      resolveThread: async (macroClient, threadTs, resolverUserId) => {
-        return resolveService.resolve(macroClient, threadTs, resolverUserId);
-      },
-    });
-
-    logger.debug(`Processed thread message ${message.ts}`);
   });
 
   app.action("resolve_ticket", async ({ ack, body, client }) => {
@@ -105,22 +110,31 @@ type NewHelpMessageOptions = {
   config: BotConfig;
   repo: TicketsRepository;
   summarizer: ThreadTitleSummarizer;
+  logger: {
+    error: (message: string, ...args: unknown[]) => void;
+    warn: (message: string, ...args: unknown[]) => void;
+  };
 };
 
 async function handleNewHelpMessage(options: NewHelpMessageOptions): Promise<void> {
-  const { message, client, config, repo, summarizer } = options;
+  const { message, client, config, repo, summarizer, logger } = options;
 
   await tryAddThinkingReaction(client, message.channel, message.ts);
 
   const title = await summarizer.summarize(message.text);
-
-  await repo.createTicket({
-    helpChannelId: message.channel,
-    threadTs: message.ts,
-    openerUserId: message.user,
-    title,
-    rootText: message.text,
-  });
+  let ticketCreated = false;
+  try {
+    await repo.createTicket({
+      helpChannelId: message.channel,
+      threadTs: message.ts,
+      openerUserId: message.user,
+      title,
+      rootText: message.text,
+    });
+    ticketCreated = true;
+  } catch (error) {
+    logger.error("Failed to persist ticket record", error);
+  }
 
   await client.chat.postMessage({
     channel: message.channel,
@@ -142,8 +156,12 @@ async function handleNewHelpMessage(options: NewHelpMessageOptions): Promise<voi
     }),
   });
 
-  if (forwarded.ts) {
-    await repo.updateForwardedMessage(message.ts, forwarded.ts);
+  if (forwarded.ts && ticketCreated) {
+    try {
+      await repo.updateForwardedMessage(message.ts, forwarded.ts);
+    } catch (error) {
+      logger.warn("Forwarded message sent, but failed to store forwarded_message_ts", error);
+    }
   }
 }
 
