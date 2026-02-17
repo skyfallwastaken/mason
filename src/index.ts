@@ -34,7 +34,7 @@ const repo = new TicketsRepository(db);
 const summarizer = new ThreadTitleSummarizer({
   apiKey: env.OPENAI_API_KEY,
   baseURL: env.OPENAI_API_URL,
-  model: env.OPENAI_MODEL ?? config.openaiModel ?? "gpt-4o-mini",
+  model: config.openaiModel,
 });
 
 const membershipService = new ChannelMembershipService(

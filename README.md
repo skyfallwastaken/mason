@@ -29,7 +29,7 @@ bun install
 cp .env.example .env
 ```
 
-3. Edit `config/bot.config.yml` with channel IDs.
+3. Edit `config/bot.config.yml` with channel IDs and `openaiModel`.
 
 4. Start bot:
 
@@ -58,7 +58,6 @@ Sensitive values stay in env vars:
 - `DATABASE_URL`
 - `OPENAI_API_KEY`
 - `OPENAI_API_URL`
-- `OPENAI_MODEL`
 - `BOT_CONFIG_PATH`
 
 Non-sensitive config stays in `config/bot.config.yml`.

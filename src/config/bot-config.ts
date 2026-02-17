@@ -7,7 +7,7 @@ const botConfigType = type({
   ticketsChannelId: "string > 0",
   hackatimeHelpChannel: "string > 0",
   summaryTimezone: "string > 0",
-  "openaiModel?": "string",
+  openaiModel: "string > 0",
 });
 
 export type BotConfig = {
@@ -16,7 +16,7 @@ export type BotConfig = {
   ticketsChannelId: string;
   hackatimeHelpChannel: string;
   summaryTimezone: string;
-  openaiModel?: string;
+  openaiModel: string;
 };
 
 export async function loadBotConfig(path: string): Promise<BotConfig> {

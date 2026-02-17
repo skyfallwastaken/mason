@@ -7,7 +7,6 @@ const envType = type({
   DATABASE_URL: "string > 0",
   "OPENAI_API_KEY?": "string",
   "OPENAI_API_URL?": "string",
-  "OPENAI_MODEL?": "string",
   "BOT_CONFIG_PATH?": "string",
 });
 
@@ -18,7 +17,6 @@ export type AppEnv = {
   DATABASE_URL: string;
   OPENAI_API_KEY?: string;
   OPENAI_API_URL?: string;
-  OPENAI_MODEL?: string;
   BOT_CONFIG_PATH: string;
 };
 
@@ -32,7 +30,6 @@ export function loadEnv(source: Record<string, string | undefined> = process.env
     DATABASE_URL: parsed.DATABASE_URL,
     OPENAI_API_KEY: parsed.OPENAI_API_KEY,
     OPENAI_API_URL: parsed.OPENAI_API_URL,
-    OPENAI_MODEL: parsed.OPENAI_MODEL,
     BOT_CONFIG_PATH: parsed.BOT_CONFIG_PATH ?? "config/bot.config.yml",
   };
 }
