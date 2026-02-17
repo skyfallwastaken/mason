@@ -15,8 +15,9 @@ export function createDevMacro(): MacroHandler {
 
       const isBts = await context.isBtsMember(context.message.user);
       if (!isBts) {
-        await context.client.chat.postMessage({
+        await context.client.chat.postEphemeral({
           channel: context.message.channel,
+          user: context.message.user,
           thread_ts: threadTs,
           text: ":rac_info: Only folks in help BTS can use `?dev`.",
         });
@@ -31,8 +32,9 @@ export function createDevMacro(): MacroHandler {
 
       const result = await context.resolveThread(context.client, threadTs, context.message.user);
       if (result.outcome !== "resolved") {
-        await context.client.chat.postMessage({
+        await context.client.chat.postEphemeral({
           channel: context.message.channel,
+          user: context.message.user,
           thread_ts: threadTs,
           text: `:rac_info: ${result.message}`,
         });

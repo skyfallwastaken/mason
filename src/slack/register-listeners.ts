@@ -90,8 +90,9 @@ export function registerSlackListeners(options: RegisterSlackListenersOptions): 
 
     const result = await resolveService.resolve(slackClient, threadTs, resolverUserId);
     if (result.outcome !== "resolved") {
-      await slackClient.chat.postMessage({
+      await slackClient.chat.postEphemeral({
         channel: channelId,
+        user: resolverUserId,
         thread_ts: threadTs,
         text: `:rac_info: ${result.message}`,
       });

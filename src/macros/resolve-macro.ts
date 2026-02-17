@@ -15,8 +15,9 @@ export function createResolveMacro(): MacroHandler {
 
       const result = await context.resolveThread(context.client, threadTs, context.message.user);
       if (result.outcome !== "resolved") {
-        await context.client.chat.postMessage({
+        await context.client.chat.postEphemeral({
           channel: context.message.channel,
+          user: context.message.user,
           thread_ts: threadTs,
           text: `:rac_info: ${result.message}`,
         });

@@ -18,6 +18,12 @@ export type SlackClient = {
       thread_ts?: string;
       blocks?: KnownBlock[];
     }) => Promise<PostMessageResponse>;
+    postEphemeral: (args: {
+      channel: string;
+      user: string;
+      text: string;
+      thread_ts?: string;
+    }) => Promise<unknown>;
     delete: (args: { channel: string; ts: string }) => Promise<unknown>;
     getPermalink: (args: { channel: string; message_ts: string }) => Promise<PostMessageResponse>;
   };
