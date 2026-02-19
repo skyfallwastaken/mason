@@ -22,6 +22,6 @@ export async function postDailySummary(options: PostDailySummaryOptions): Promis
   await options.client.chat.postMessage({
     channel: options.btsChannelId,
     text,
-    blocks: buildDailySummaryBlocks(text),
+    blocks: buildDailySummaryBlocks(stats),
   });
 }
