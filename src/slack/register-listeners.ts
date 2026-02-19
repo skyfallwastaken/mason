@@ -4,6 +4,7 @@ import type { BotConfig } from "../config/bot-config";
 import type { TicketsRepository } from "../db/tickets-repository";
 import type { MacroRegistry } from "../macros/registry";
 import type { ThreadTitleSummarizer } from "../openai/thread-title-summarizer";
+import { postDailySummary } from "../summary/post-daily-summary";
 import type { ChannelMembershipService } from "./channel-membership";
 import type { SlackClient } from "./client-types";
 import { buildForwardedTicketBlocks } from "./components/forwarded-ticket-message";
@@ -98,6 +99,59 @@ export function registerSlackListeners(options: RegisterSlackListenersOptions): 
       });
     }
   });
+
+  app.event("app_mention", async ({ event, client, logger }) => {
+    try {
+      const slackClient = client as unknown as SlackClient;
+      const text = typeof event.text === "string" ? event.text : "";
+      const mentionStripped = text.replace(/<@[A-Z0-9]+>/g, "").trim();
+
+      if (/^summary$/i.test(mentionStripped)) {
+        await postDailySummary({
+          client: slackClient,
+          repo,
+          btsChannelId: event.channel,
+          timezone: config.summaryTimezone,
+        });
+        return;
+      }
+
+      if (event.channel === config.helpChannelId && event.thread_ts) {
+        const existing = await repo.getByThreadTs(event.thread_ts);
+        if (existing) {
+          await slackClient.chat.postEphemeral({
+            channel: event.channel,
+            user: event.user ?? "",
+            thread_ts: event.thread_ts,
+            text: ":rac_info: This thread is already tracked as a help ticket!",
+          });
+          return;
+        }
+
+        const rootMessage = await fetchRootMessage(slackClient, event.channel, event.thread_ts);
+        if (!rootMessage) {
+          logger.error(`Could not fetch root message for thread ${event.thread_ts}`);
+          return;
+        }
+
+        await handleNewHelpMessage({
+          message: {
+            channel: event.channel,
+            user: rootMessage.user,
+            text: rootMessage.text,
+            ts: event.thread_ts,
+          },
+          client: slackClient,
+          config,
+          repo,
+          summarizer,
+          logger,
+        });
+      }
+    } catch (error) {
+      logger.error("Failed to process app_mention event", error);
+    }
+  });
 }
 
 type NewHelpMessageOptions = {
@@ -179,6 +233,30 @@ async function tryAddThinkingReaction(
   } catch {
     // Safe to ignore duplicate/missing reaction errors.
   }
+}
+
+async function fetchRootMessage(
+  client: SlackClient,
+  channel: string,
+  threadTs: string,
+): Promise<{ user: string; text: string } | null> {
+  try {
+    const response = await client.conversations.replies({
+      channel,
+      ts: threadTs,
+      limit: 1,
+      inclusive: true,
+    });
+
+    const root = response.messages?.[0];
+    if (root?.user && typeof root.text === "string") {
+      return { user: root.user, text: root.text };
+    }
+  } catch {
+    // Fall through to null.
+  }
+
+  return null;
 }
 
 async function getPermalink(client: SlackClient, channel: string, ts: string): Promise<string> {

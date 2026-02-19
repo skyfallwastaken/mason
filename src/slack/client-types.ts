@@ -33,5 +33,14 @@ export type SlackClient = {
       cursor?: string;
       limit?: number;
     }) => Promise<{ members?: string[]; response_metadata?: { next_cursor?: string } }>;
+    replies: (args: {
+      channel: string;
+      ts: string;
+      limit?: number;
+      inclusive?: boolean;
+    }) => Promise<{
+      ok?: boolean;
+      messages?: Array<{ user?: string; text?: string; ts?: string; thread_ts?: string }>;
+    }>;
   };
 };
