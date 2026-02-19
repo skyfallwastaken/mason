@@ -16,13 +16,12 @@ export function toUserMessageEvent(event: Record<string, unknown>): UserMessageE
 
   const channel = event.channel;
   const user = event.user;
-  const text = event.text;
+  const text = typeof event.text === "string" ? event.text : "";
   const ts = event.ts;
 
   if (
     typeof channel !== "string" ||
     typeof user !== "string" ||
-    typeof text !== "string" ||
     typeof ts !== "string"
   ) {
     return null;
@@ -31,15 +30,27 @@ export function toUserMessageEvent(event: Record<string, unknown>): UserMessageE
   const subtype = typeof event.subtype === "string" ? event.subtype : undefined;
   const botId = typeof event.bot_id === "string" ? event.bot_id : undefined;
 
-  if (subtype || botId) {
+  const allowedSubtypes = new Set(["file_share"]);
+  if (botId || (subtype && !allowedSubtypes.has(subtype))) {
     return null;
+  }
+
+  let resolvedText = text;
+  if (subtype === "file_share" && !text.trim()) {
+    const files = Array.isArray(event.files) ? event.files : [];
+    const first = files[0] as Record<string, unknown> | undefined;
+    const fileLabel =
+      typeof first?.title === "string" ? first.title :
+      typeof first?.name === "string" ? first.name :
+      "a file";
+    resolvedText = `Shared ${fileLabel}`;
   }
 
   return {
     type: "message",
     channel,
     user,
-    text,
+    text: resolvedText,
     ts,
     thread_ts: typeof event.thread_ts === "string" ? event.thread_ts : undefined,
   };
