@@ -40,7 +40,7 @@ export class ThreadTitleSummarizer {
       const completion = await this.client.chat.completions.create({
         model: this.options.model,
         temperature: 0.2,
-        max_completion_tokens: 32,
+        max_completion_tokens: 128,
         messages: [
           {
             role: "system",
