@@ -35,6 +35,10 @@ const summarizer = new ThreadTitleSummarizer({
   apiKey: env.OPENAI_API_KEY,
   baseURL: env.OPENAI_API_URL,
   model: config.openaiModel,
+  logger: {
+    warn: (message: string, ...args: unknown[]) => app.logger.warn(message, ...args),
+    error: (message: string, ...args: unknown[]) => app.logger.error(message, ...args),
+  },
 });
 
 const membershipService = new ChannelMembershipService(
